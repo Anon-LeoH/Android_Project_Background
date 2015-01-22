@@ -11,12 +11,15 @@ db.open(function(err,db){
         console.log('Connecting DataBase succeed'); //db链接成功
         db.createCollection("user",function(err,collection){  //建立用户信息的collection
             if (err) console.log("error:" + err);  //报错
+            collection.remove(function(){});
         });
         db.createCollection("task",function(err,collection){  //建立用户信息的collection
             if (err) console.log("error:" + err);  //报错
+            collection.remove(function(){});
         });
         db.createCollection("request",function(err,collection){  //建立用户信息的collection
             if (err) console.log("error:" + err);  //报错
+            collection.remove(function(){});
         });
     }
     else console.log(err); //无法打开database

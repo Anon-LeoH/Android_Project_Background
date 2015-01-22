@@ -3,7 +3,7 @@ var uuid = require('./uuid');
 var getOutput = function(data, key) {
   rlt = {};
   for (i = 0; i < key.length; i++) {
-    if (data[key[i]] && data[key[i]] != [] && data[key[i]] != {}) {
+    if (data[key[i]] != null && data[key[i]] != [] && data[key[i]] != {}) {
       rlt[key[i]] = data[key[i]];
     }
   }
@@ -63,13 +63,19 @@ var task = {
     if (data['target']) tsk.target = data.target;
     else tsk.target = null
     if (data['ownFin']) tsk.ownFin = data.ownFin;
-    else tsk.ownFin = null
+    else tsk.ownFin = 0
     if (data['tarFin']) tsk.tarFin = data.tarFin;
-    else tsk.tarFin = null
+    else tsk.tarFin = 0
     tsk.toOutput = function() {
-      return getOutput(tsk, ['ID', 'title', 'date', 'content', 'owner', 'target', 'ownFin', 'tarFin']);
+      tmp = getOutput(tsk, ['ID', 'title', 'date', 'content', 'owner', 'target']);
+      return tmp;
     }
-    tsk.toSelfView = tsk.toOutput;
+    tsk.toSelfView = function() {
+      tmp = getOutput(tsk, ['ID', 'title', 'date', 'content', 'owner', 'target']);
+      tmp.ownFin = tsk.ownFin;
+      tmp.tarFin = tsk.tarFin;
+      return tmp;
+    }
     tsk.toOtherView = tsk.toOutput;
     return tsk;
   }
@@ -86,15 +92,11 @@ var request = {
     else req.target = null
     if (data['recv']) req.recv = data.recv;
     else req.recv = null
-    req.ID = data.ID;
-    req.type = data.type;
-    req.target = data.target;
-    req.recv = data.recv;
     req.toOutput = function() {
       return getOutput(req, ['ID', 'target', 'type', 'recv']);
     }
-    req.toSelfView = tsk.toOutput;
-    req.toOtherView = tsk.toOutput;
+    req.toSelfView = req.toOutput;
+    req.toOtherView = req.toOutput;
     return req;
   }
 }

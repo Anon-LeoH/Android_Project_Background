@@ -23,7 +23,7 @@ function startdb() {
 }
 
 function insert(col, item, cb) {
-  item.getID();
+  item.ID;
   db.collection(col, function(err, collection) {
     if (err) cb(0, err);
     collection.insert(item.toOutput(), function(err, res) {
@@ -66,7 +66,7 @@ function findOne(col, item, cb) {
   db.collection(col, function(err, collection) {
     if (err) cb(0, err);
     collection.findOne(item.toOutput(), function(err, res) {
-      if (err) cb(0, err);
+      if (!res) cb(0, err);
       else cb(dataClass[col].getInstance(res), null);
     });
   });

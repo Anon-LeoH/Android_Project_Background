@@ -22,13 +22,13 @@ function randomInt (low, high) {
 
 var template = {
   'errno': function(argv, data) {
-    return {err: 0, type: 'suc'};
+    return {errno: 1, type: 'suc', info: 'suc'};
   },
   'error': function(argv, data) {
-    return {err: 1, type: argv, errInfo: data};
+    return {errno: 0, type: argv, errInfo: data};
   },
   'info': function(argv, data) {
-    return {err: 0, type: argv, info: data};
+    return {errno: 1, type: argv, info: data};
   }
 }
 
@@ -51,8 +51,8 @@ function sendTask(tid) {
 
 function checkKey(uid, key, cb) {
   var data = {ID: uid, _key: key};
-  db.findOne('user', dataType.user.getInstance(data), function(res, errno) {
-    if (errno) cb(true);
+  db.findOne('user', dataType.user.getInstance(data), function(res, err) {
+    if (!err) cb(true);
     else cb(false);
   });
 }
@@ -94,15 +94,13 @@ function getNews(req, res) {
       if (err) {
         returnMsg(res, 'error', DB_ERROR, DB_ERROR_INFO);
       } else {
-        var tmp = {
-          fri: [],
-          conf: [],
-          tsk: []
-        };
-        for (i = 0; i < rlt.length; i++) {
-          tmp[rlt[i].type].push(rlt[i].toOutput);
+        str = ""
+        for (var j = 0; j < rlt.length; j++) {
+          str += rlt[j].ID + "&&&" + rlt[j].type + "&&&" + rlt[j].target + "&&&"
         }
-        returnMsg(res, 'info', 'news', tmp);
+        str += "&&";
+        str = str.replace("&&&&&", "");
+        returnMsg(res, 'info', 'news', str);
       }
     });
   });
@@ -149,7 +147,7 @@ function getTaskInfo(req, res) {
       if (err) {
         returnMsg(res, 'error', DB_ERROR, DB_ERROR_INFO);
       } else {
-        returnMsg(res, 'info', 'task', rlt.toOutput());
+        returnMsg(res, 'info', 'task', rlt.toSelfView());
       }
     });
   });
@@ -231,9 +229,9 @@ function confirmTask(req, res) {
         returnMsg(res, 'error', DB_ERROR, DB_ERROR_INFO);
       } else {
         if (rlt.owner == uid) {
-          if (!rlt.ownFin) {
-            rlt.ownFin = true;
-            rlt.tarFin = true;
+          if (!rlt.ownFin == 1) {
+            rlt.ownFin = 1;
+            rlt.tarFin = 1;
             db.remove('request', dataType.request.getInstance({'target': rlt.ID}), function(r, err) {
               db.update('task', rlt, function(rlt, err) {
                 if (!rlt) {
@@ -247,8 +245,8 @@ function confirmTask(req, res) {
             returnMsg(res, 'error', DB_ERROR, DB_ERROR_INFO);
           }
         } else if (rlt.target == uid) {
-          if (!rlt.tarFin) {
-            rlt.tarFin = true;
+          if (!rlt.tarFin == 1) {
+            rlt.tarFin = 1;
             db.remove('request', dataType.request.getInstance({'target': rlt.ID, 'recv': uid}), function(r, err) {
               db.update('task', rlt, function(rlt, err) {
                 if (!rlt) {
@@ -312,6 +310,7 @@ function removeTask(req, res) {
   var uid = query.uid;
   var key = query.key;
   var target = query.target;
+  console.log("user " + uid + " want to remove " + target);
   checkKey(uid, key, function(rlt) {
     if (!rlt) {
       returnMsg(res, 'error', KEY_ERROR, KEY_ERROR_INFO);
@@ -328,6 +327,7 @@ function removeTask(req, res) {
             'target': target,
             'recv': rlt.target
           }), function(rlt, err){});
+          console.log("succeed");
           returnMsg(res, 'errno', null, null);
         } else if (rlt.target == uid) {
           db.remove('request', dataType.request.getInstance({
@@ -335,8 +335,11 @@ function removeTask(req, res) {
             'recv': rlt.target
           }), function(rlt, err){});
           sendTask(rlt.ID);
+          console.log("succeed");
           returnMsg(res, 'errno', null, null);
         } else {
+          console.log("failed because rlt is : ");
+          console.log(rlt);
           returnMsg(res, 'error', DB_ERROR, DB_ERROR_INFO);
         }
       }
@@ -385,8 +388,9 @@ function getAllTask(req, res) {
       if (err) {
         returnMsg(res, 'error', DB_ERROR, DB_ERROR_INFO);
       } else {
-        for (i = 0; i < rlt.length; i++) {
-          rlt[i] = rlt[i].toOutput();
+        for (var i = 0; i < rlt.length; i++) {
+          rlt[i] = rlt[i].toSelfView();
+          console.log(rlt[i]);
         }
         returnMsg(res, 'info', 'tsks', rlt);
       }
